@@ -7,20 +7,59 @@
   {{end}}
 
   {{if .Result}}
-  <div class="border border-[var(--color-border)] bg-[var(--color-panel)] rounded p-4 mono text-sm">
-    <div class="text-[var(--color-fg-dim)] text-xs uppercase tracking-wider mb-2">Result</div>
-    <dl class="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1">
-      <dt class="text-[var(--color-fg-muted)]">Network</dt>     <dd>{{.Result.Network}}/{{.Result.PrefixLen}}</dd>
-      {{if .Result.Broadcast.IsValid}}<dt class="text-[var(--color-fg-muted)]">Broadcast</dt><dd>{{.Result.Broadcast}}</dd>{{end}}
-      <dt class="text-[var(--color-fg-muted)]">HostMin</dt>     <dd>{{.Result.HostMin}}</dd>
-      <dt class="text-[var(--color-fg-muted)]">HostMax</dt>     <dd>{{.Result.HostMax}}</dd>
-      <dt class="text-[var(--color-fg-muted)]">Hosts</dt>       <dd>{{.Result.HostCount}}</dd>
-      <dt class="text-[var(--color-fg-muted)]">Netmask</dt>     <dd>{{.Result.Netmask}}</dd>
-      <dt class="text-[var(--color-fg-muted)]">Wildcard</dt>    <dd>{{.Result.Wildcard}}</dd>
-      {{if .Result.Class}}<dt class="text-[var(--color-fg-muted)]">Class</dt><dd>{{.Result.Class}}</dd>{{end}}
-      <dt class="text-[var(--color-fg-muted)]">arpa</dt>        <dd>{{.Result.ReverseDNS}}</dd>
-      <dt class="text-[var(--color-fg-muted)]">Binary</dt>      <dd>{{.Result.BinaryAddr}}</dd>
-      <dt class="text-[var(--color-fg-muted)]">Mask (bin)</dt>  <dd>{{.Result.BinaryMask}}</dd>
+  {{/* PRIMARY — Range: network, hosts, broadcast. The headline section. */}}
+  <div class="section section-primary space-y-3">
+    <div class="section-title">Range</div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="hero-addr">{{.Result.Network}}/{{.Result.PrefixLen}}</span>
+      {{if .Result.IsRFC1918}}<span class="chip chip-accent">RFC1918</span>{{end}}
+      {{if .Result.IsLoopback}}<span class="chip chip-warn">loopback</span>{{end}}
+      {{if .Result.IsLinkLocal}}<span class="chip chip-warn">link-local</span>{{end}}
+      {{if .Result.IsMulticast}}<span class="chip chip-warn">multicast</span>{{end}}
+      {{if .Result.IsPublic}}<span class="chip chip-err" title="Publicly routable address — not for LAN assignment">public</span>{{end}}
+    </div>
+
+    <dl class="kv">
+      <dt>Hosts</dt>
+      <dd class="range">
+        <span>{{.Result.HostMin}}</span>
+        <span class="range-arrow">→</span>
+        <span>{{.Result.HostMax}}</span>
+        <span class="range-count"><span data-num="{{.Result.HostCount}}">{{.Result.HostCount}}</span> usable</span>
+      </dd>
+      {{if .Result.Broadcast.IsValid}}
+      <dt>Broadcast</dt>
+      <dd>{{.Result.Broadcast}}</dd>
+      {{end}}
+    </dl>
+  </div>
+
+  {{/* SECONDARY — Mask: netmask, wildcard. */}}
+  <div class="section">
+    <div class="section-title">Mask</div>
+    <dl class="kv">
+      <dt>Netmask</dt>
+      <dd>{{.Result.Netmask}} <span class="text-[var(--color-fg-dim)]">/{{.Result.PrefixLen}}</span></dd>
+      <dt>Wildcard</dt>
+      <dd>{{.Result.Wildcard}}</dd>
+    </dl>
+  </div>
+
+  {{/* REFERENCE — Class, arpa, binary with network/host bit colouring. */}}
+  <div class="section">
+    <div class="section-title">Reference</div>
+    <dl class="kv">
+      {{if .Result.Class}}
+      <dt>Class</dt>
+      <dd>{{.Result.Class}}</dd>
+      {{end}}
+      <dt>Arpa</dt>
+      <dd>{{.Result.ReverseDNS}}</dd>
+      <dt>Binary</dt>
+      <dd><span class="bin-net">{{.Result.BinaryAddrNet}}</span><span class="bin-host">{{.Result.BinaryAddrHost}}</span></dd>
+      <dt>Mask bin</dt>
+      <dd><span class="bin-net">{{.Result.BinaryMaskNet}}</span><span class="bin-host">{{.Result.BinaryMaskHost}}</span></dd>
     </dl>
   </div>
   {{end}}

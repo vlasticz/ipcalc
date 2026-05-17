@@ -196,6 +196,79 @@ func TestCalculate_RFC1918(t *testing.T) {
 	}
 }
 
+// TestCalculate_PrefixWiderThanCategory is the regression test for the bug
+// where a prefix wider than the canonical private/special block was
+// incorrectly classified by checking only the network address's first
+// byte. The fix requires that [netU, bcastU] be wholly contained in the
+// category's range.
+func TestCalculate_PrefixWiderThanCategory(t *testing.T) {
+	cases := []struct {
+		prefix    string
+		wantRFC   bool
+		wantPub   bool
+		wantClass string
+	}{
+		// User-reported regression: /13 starting at 192.168.0.0 spans
+		// 192.168.0.0 - 192.175.255.255. 192.169-192.175 is public space,
+		// so the prefix is NOT RFC1918 even though the network address is.
+		{"192.168.0.0/13", false, true, "C"},
+		// /15 of 192.168 covers 192.168 + 192.169 — second half is public.
+		{"192.168.0.0/15", false, true, "C"},
+		// /7 of 10.0.0.0 covers 10/8 + 11/8 — only 10/8 is RFC1918.
+		{"10.0.0.0/7", false, true, "A"},
+		// /11 of 172.16.0.0 covers 172.0 - 172.31 — partly RFC1918, mostly not.
+		{"172.0.0.0/11", false, true, "B"},
+		// Multi-class prefix: /1 of 128.0.0.0 spans B+C+D+E. No class label.
+		{"128.0.0.0/1", false, true, ""},
+		// Exact-block matches stay positive.
+		{"192.168.0.0/16", true, false, "C"},
+		{"10.0.0.0/8", true, false, "A"},
+		{"172.16.0.0/12", true, false, "B"},
+	}
+	for _, c := range cases {
+		r := Calculate(netip.MustParsePrefix(c.prefix))
+		if r.IsRFC1918 != c.wantRFC {
+			t.Errorf("%s: IsRFC1918 got %v, want %v", c.prefix, r.IsRFC1918, c.wantRFC)
+		}
+		if r.IsPublic != c.wantPub {
+			t.Errorf("%s: IsPublic got %v, want %v", c.prefix, r.IsPublic, c.wantPub)
+		}
+		if r.Class != c.wantClass {
+			t.Errorf("%s: Class got %q, want %q", c.prefix, r.Class, c.wantClass)
+		}
+	}
+}
+
+// TestCalculate_IsPublic covers the negation flag used to render the
+// red "public" warning chip. Must be false for any RFC1918 / loopback /
+// link-local / multicast address; true otherwise.
+func TestCalculate_IsPublic(t *testing.T) {
+	cases := []struct {
+		prefix string
+		want   bool
+	}{
+		// Private / special — IsPublic must be false.
+		{"10.0.0.0/8", false},
+		{"172.16.0.0/12", false},
+		{"192.168.1.0/24", false},
+		{"127.0.0.1/32", false},
+		{"169.254.0.0/16", false},
+		{"224.0.0.0/4", false},
+		// Public — IsPublic must be true.
+		{"8.8.8.0/24", true},
+		{"1.1.1.0/24", true},
+		{"203.0.113.0/24", true}, // documentation range — still warns
+		{"172.32.0.0/16", true},  // just outside RFC1918
+		{"192.169.0.0/16", true}, // just outside RFC1918
+	}
+	for _, c := range cases {
+		r := Calculate(netip.MustParsePrefix(c.prefix))
+		if r.IsPublic != c.want {
+			t.Errorf("%s: IsPublic got %v, want %v", c.prefix, r.IsPublic, c.want)
+		}
+	}
+}
+
 // TestCalculate_SpecialRanges covers link-local, multicast, loopback.
 func TestCalculate_SpecialRanges(t *testing.T) {
 	cases := []struct {
@@ -300,6 +373,40 @@ func TestCalculate_HostCountAcrossPrefixes(t *testing.T) {
 		r := Calculate(netip.MustParsePrefix(c.prefix))
 		if r.HostCount != c.want {
 			t.Errorf("%s: HostCount got %d, want %d", c.prefix, r.HostCount, c.want)
+		}
+	}
+}
+
+// TestCalculate_BinarySplit verifies that the network/host parts of the
+// binary representation join back to the full string and split at the
+// right bit, including non-octet-aligned prefixes.
+func TestCalculate_BinarySplit(t *testing.T) {
+	cases := []struct {
+		prefix     string
+		wantAddrNet, wantAddrHost string
+	}{
+		{"0.0.0.0/0", "", "00000000.00000000.00000000.00000000"},
+		{"192.168.1.0/24",
+			"11000000.10101000.00000001",
+			".00000000"},
+		{"192.168.1.0/26",
+			"11000000.10101000.00000001.00",
+			"000000"},
+		{"10.0.0.1/32",
+			"00001010.00000000.00000000.00000001",
+			""},
+	}
+	for _, c := range cases {
+		r := Calculate(netip.MustParsePrefix(c.prefix))
+		if r.BinaryAddrNet != c.wantAddrNet {
+			t.Errorf("%s: BinaryAddrNet got %q, want %q", c.prefix, r.BinaryAddrNet, c.wantAddrNet)
+		}
+		if r.BinaryAddrHost != c.wantAddrHost {
+			t.Errorf("%s: BinaryAddrHost got %q, want %q", c.prefix, r.BinaryAddrHost, c.wantAddrHost)
+		}
+		if r.BinaryAddrNet+r.BinaryAddrHost != r.BinaryAddr {
+			t.Errorf("%s: BinaryAddrNet+BinaryAddrHost != BinaryAddr (%q+%q != %q)",
+				c.prefix, r.BinaryAddrNet, r.BinaryAddrHost, r.BinaryAddr)
 		}
 	}
 }

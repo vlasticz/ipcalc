@@ -5,8 +5,13 @@ import (
 	"time"
 )
 
-// handleTheme sets the accent cookie. Returns 204 plus HX-Refresh so HTMX
-// reloads the page with the new accent applied server-side (no FOUC).
+// handleTheme is the no-JS fallback for the theme switcher. JS users
+// short-circuit this entirely (see layout.gohtml — the form's submit is
+// preventDefault'd and the cookie + body class are updated client-side).
+//
+// HttpOnly is intentionally NOT set so the JS path can write the same
+// cookie. Accent preference is non-sensitive — no need to protect from
+// document.cookie access.
 func (s *server) handleTheme(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
@@ -23,10 +28,15 @@ func (s *server) handleTheme(w http.ResponseWriter, r *http.Request) {
 		Value:    v,
 		Path:     "/",
 		MaxAge:   60 * 60 * 24 * 365, // 1y
-		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(365 * 24 * time.Hour),
 	})
-	w.Header().Set("HX-Refresh", "true")
-	w.WriteHeader(http.StatusNoContent)
+
+	// Send the no-JS user back to the page they were on so the new accent
+	// renders without losing their place.
+	ref := r.Header.Get("Referer")
+	if ref == "" {
+		ref = "/"
+	}
+	http.Redirect(w, r, ref, http.StatusSeeOther)
 }

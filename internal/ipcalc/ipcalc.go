@@ -36,10 +36,18 @@ type Result struct {
 	IsLinkLocal bool
 	IsMulticast bool
 	IsLoopback  bool
+	IsPublic    bool // not in any of the recognised private/special ranges
+
 	ReverseDNS  string // 0.1.168.192.in-addr.arpa for 192.168.1.0
 
 	BinaryAddr string // "11000000.10101000.00000001.00000000"
 	BinaryMask string
+
+	// Network/host split for colour-coded binary rendering. BinaryAddrNet
+	// covers the prefix bits, BinaryAddrHost covers the host bits. The
+	// boundary "." goes with Host so Net ends on a real bit.
+	BinaryAddrNet, BinaryAddrHost string
+	BinaryMaskNet, BinaryMaskHost string
 }
 
 // Calculate derives every Result field from an IPv4 prefix. IPv6 is out of
@@ -57,22 +65,32 @@ func Calculate(p netip.Prefix) Result {
 	bcastU := netU | ^maskU
 
 	network := uint32ToAddr(netU)
+	binAddr := toBinaryDotted(addrU)
+	binMask := toBinaryDotted(maskU)
+	binAddrNet, binAddrHost := splitBinaryByPrefix(binAddr, bits)
+	binMaskNet, binMaskHost := splitBinaryByPrefix(binMask, bits)
+
 	r := Result{
-		Input:       p,
-		Normalized:  netip.PrefixFrom(network, bits),
-		HostBitsSet: addrU != netU,
-		Network:     network,
-		Netmask:     uint32ToAddr(maskU),
-		Wildcard:    uint32ToAddr(^maskU),
-		PrefixLen:   bits,
-		BinaryAddr:  toBinaryDotted(addrU),
-		BinaryMask:  toBinaryDotted(maskU),
-		IsRFC1918:   isRFC1918(network),
-		IsLinkLocal: isLinkLocal(network),
-		IsMulticast: isMulticast(network),
-		IsLoopback:  isLoopback(network),
-		ReverseDNS:  reverseDNS(network),
-		Class:       class(network, bits),
+		Input:          p,
+		Normalized:     netip.PrefixFrom(network, bits),
+		HostBitsSet:    addrU != netU,
+		Network:        network,
+		Netmask:        uint32ToAddr(maskU),
+		Wildcard:       uint32ToAddr(^maskU),
+		PrefixLen:      bits,
+		BinaryAddr:     binAddr,
+		BinaryMask:     binMask,
+		BinaryAddrNet:  binAddrNet,
+		BinaryAddrHost: binAddrHost,
+		BinaryMaskNet:  binMaskNet,
+		BinaryMaskHost: binMaskHost,
+		IsRFC1918:      isRFC1918(netU, bcastU),
+		IsLinkLocal:    isLinkLocal(netU, bcastU),
+		IsMulticast:    isMulticast(netU, bcastU),
+		IsLoopback:     isLoopback(netU, bcastU),
+		IsPublic:       !isRFC1918(netU, bcastU) && !isLinkLocal(netU, bcastU) && !isMulticast(netU, bcastU) && !isLoopback(netU, bcastU),
+		ReverseDNS:     reverseDNS(network),
+		Class:          class(netU, bcastU, bits),
 	}
 
 	switch bits {

@@ -23,6 +23,47 @@
   <main class="px-6 py-8 max-w-5xl mx-auto">
     {{block "content" .}}{{end}}
   </main>
+
+  <script>
+    // Locale-aware number formatting. Any element with [data-num="<int>"]
+    // gets its textContent replaced with the formatted version using the
+    // browser's locale (navigator.language). Re-run after HTMX swaps so
+    // fragments coming from the server are formatted too.
+    (function () {
+      const fmt = new Intl.NumberFormat();
+      function formatNumbers(root) {
+        (root || document).querySelectorAll('[data-num]').forEach(el => {
+          const n = Number(el.dataset.num);
+          if (!Number.isNaN(n)) el.textContent = fmt.format(n);
+        });
+      }
+      document.addEventListener('DOMContentLoaded', () => formatNumbers());
+      document.body.addEventListener('htmx:afterSwap', e => formatNumbers(e.target));
+    })();
+
+    // Theme switcher — client-side. Intercepts the form submit, writes the
+    // accent cookie, and swaps the body class so CSS variables (chips,
+    // hero address, bin-net, etc.) re-tint instantly. No HTTP roundtrip,
+    // no page reload — the displayed result panel is preserved. If JS is
+    // disabled the form submits to /theme and the server takes care of it.
+    (function () {
+      const form = document.querySelector('[data-theme-switch]');
+      if (!form) return;
+      form.addEventListener('click', e => {
+        const btn = e.target.closest('button[data-accent]');
+        if (!btn) return;
+        e.preventDefault();
+        const accent = btn.dataset.accent;
+        document.cookie = 'ipcalc_accent=' + accent +
+          '; path=/; max-age=31536000; SameSite=Lax';
+        document.body.className = document.body.className
+          .replace(/accent-\w+/g, 'accent-' + accent);
+        form.querySelectorAll('button[data-accent]').forEach(b => {
+          b.dataset.selected = (b.dataset.accent === accent) ? 'true' : 'false';
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
 {{end}}

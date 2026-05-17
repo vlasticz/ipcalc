@@ -1,9 +1,12 @@
 {{define "partial_theme_switch"}}
-<form hx-post="/theme" hx-swap="none" class="flex gap-1 items-center text-xs">
+{{/* No HTMX: JS intercepts the form (see layout.gohtml's inline script) and
+     updates the cookie + body class without a roundtrip. If JS is off, the
+     form submits normally and the server's /theme handler does a 303
+     redirect back, giving a graceful fallback. */}}
+<form action="/theme" method="post" class="flex gap-1 items-center" data-theme-switch>
   {{range $a := .Accents}}
-  <button type="submit" name="accent" value="{{$a}}"
-          class="px-2 py-0.5 rounded border border-[var(--color-border)] mono
-                 {{if eq $.Accent $a}}text-[var(--color-fg)] bg-[var(--color-panel-2)]{{else}}text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]{{end}}"
+  <button type="submit" name="accent" value="{{$a}}" data-accent="{{$a}}"
+          data-selected="{{if eq $.Accent $a}}true{{else}}false{{end}}"
           title="Switch accent to {{$a}}">{{$a}}</button>
   {{end}}
 </form>

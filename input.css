@@ -40,3 +40,118 @@
 html, body { background: var(--color-bg); color: var(--color-fg); }
 body { font-family: var(--font-sans); }
 .mono { font-family: var(--font-mono); }
+
+/* Inline chips — small metadata labels next to the network address. Filled
+   style with 15% colour-mixed background; restrained, monospace, uppercase. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+.chip-accent {
+  background: color-mix(in oklab, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+.chip-warn {
+  background: color-mix(in oklab, var(--color-warn) 15%, transparent);
+  color: var(--color-warn);
+}
+.chip-err {
+  background: color-mix(in oklab, var(--color-err) 18%, transparent);
+  color: var(--color-err);
+  border: 1px solid color-mix(in oklab, var(--color-err) 40%, transparent);
+}
+
+/* Result panel — three-tier sectioning. */
+.section {
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  border-radius: 0.375rem;
+  padding: 1rem;
+}
+.section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-fg-dim);
+  margin-bottom: 0.75rem;
+}
+/* Primary section — slightly raised, accent left-edge. */
+.section-primary {
+  background: var(--color-panel-2);
+  border-left: 2px solid var(--accent);
+}
+.kv {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: 0.25rem 1rem;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+.kv > dt {
+  color: var(--color-fg-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.kv > dd { color: var(--color-fg); }
+
+/* Hero address — network/prefix in accent at the top of Range. */
+.hero-addr {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Host range row — usable hosts displayed as min → max. */
+.range {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+.range-arrow {
+  color: var(--color-fg-dim);
+  font-size: 0.875rem;
+}
+.range-count {
+  font-size: 0.75rem;
+  color: var(--color-fg-muted);
+  margin-left: 0.5rem;
+}
+
+/* Binary bit colouring — network bits in accent, host bits dim. */
+.bin-net  { color: var(--accent); }
+.bin-host { color: var(--color-fg-dim); }
+
+/* Theme switch — replaces HTMX form with plain buttons styled via
+   data-selected attribute. */
+[data-theme-switch] button {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-dim);
+  background: transparent;
+  cursor: pointer;
+  transition: color 80ms, background 80ms;
+}
+[data-theme-switch] button:hover { color: var(--color-fg); }
+[data-theme-switch] button[data-selected="true"] {
+  color: var(--color-fg);
+  background: var(--color-panel-2);
+  border-color: var(--accent);
+}

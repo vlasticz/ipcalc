@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@source "./internal/templates/**/*.gohtml";
+@source "./cmd/**/*.go";
+@source "./internal/**/*.go";
+
+@theme {
+  /* Surface */
+  --color-bg:        #0b0d10;
+  --color-panel:     #14171b;
+  --color-panel-2:   #1a1e24;
+  --color-border:    #262b33;
+
+  /* Foreground */
+  --color-fg:        #e6e8eb;
+  --color-fg-muted:  #99a1ad;
+  --color-fg-dim:    #6b7380;
+
+  /* Accents (selectable; one wins via the .accent-* body class) */
+  --color-accent-cyan:  #22d3ee;
+  --color-accent-amber: #fbbf24;
+  --color-accent-green: #34d399;
+
+  /* Semantic */
+  --color-warn:      #f59e0b;
+  --color-err:       #f87171;
+
+  /* Typography */
+  --font-mono: ui-monospace, "JetBrains Mono", "Fira Code", "SF Mono", Menlo, monospace;
+  --font-sans: ui-sans-serif, system-ui, "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Accent resolution — body carries the class, utilities reference --accent. */
+:root        { --accent: var(--color-accent-cyan); }
+.accent-cyan  { --accent: var(--color-accent-cyan);  }
+.accent-amber { --accent: var(--color-accent-amber); }
+.accent-green { --accent: var(--color-accent-green); }
+
+/* Base */
+html, body { background: var(--color-bg); color: var(--color-fg); }
+body { font-family: var(--font-sans); }
+.mono { font-family: var(--font-mono); }

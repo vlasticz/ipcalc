@@ -1,0 +1,10 @@
+{{define "partial_theme_switch"}}
+<form hx-post="/theme" hx-swap="none" class="flex gap-1 items-center text-xs">
+  {{range $a := .Accents}}
+  <button type="submit" name="accent" value="{{$a}}"
+          class="px-2 py-0.5 rounded border border-[var(--color-border)] mono
+                 {{if eq $.Accent $a}}text-[var(--color-fg)] bg-[var(--color-panel-2)]{{else}}text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]{{end}}"
+          title="Switch accent to {{$a}}">{{$a}}</button>
+  {{end}}
+</form>
+{{end}}

@@ -1,0 +1,23 @@
+# Source-tree noise that should not influence the build context
+.git/
+.github/
+.claude/
+CLAUDE.md
+README.md
+LICENSE
+Makefile
+.air.toml
+.gitignore
+.dockerignore
+
+# Local dev artifacts
+/bin/
+/dist/
+/data/
+/node_modules/
+.env
+.env.local
+.DS_Store
+
+# Anything Go's `go build` doesn't need
+*_test.go

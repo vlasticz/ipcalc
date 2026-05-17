@@ -1,0 +1,34 @@
+# Persona instructions — local only, not part of the public repo
+CLAUDE.md
+.claude/
+
+# Build output
+/bin/
+/dist/
+/server
+/static/app.css
+
+# Dev databases / data
+/data/*
+!/data/.gitkeep
+
+# Node (Tailwind CLI only — runtime is Go)
+/node_modules/
+
+# Env / secrets
+.env
+.env.local
+
+# Editor / OS noise
+.DS_Store
+.vscode/
+.idea/
+
+# Go test/coverage output
+*.test
+*.out
+coverage.txt
+
+# Air (hot-reload) artifacts
+/tmp/
+build-errors.log

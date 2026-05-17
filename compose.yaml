@@ -1,0 +1,24 @@
+# Compose for hw-minis (lab convention). The containers persona settles the
+# final host port and hostname at deploy time; the placeholders below are TODOs.
+
+services:
+  ipcalc:
+    image: ipcalc:dev
+    container_name: ipcalc
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      DB_PATH: "/data/ipcalc.db"
+    ports:
+      # TODO: containers persona — pick host port, NPM upstream is 192.168.100.2:<host-port>
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    # The Dockerfile's HEALTHCHECK is inherited; this block makes it explicit
+    # for operators reading the compose file.
+    healthcheck:
+      test: ["CMD", "/server", "-healthcheck"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3

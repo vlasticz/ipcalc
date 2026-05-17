@@ -1,0 +1,34 @@
+{{define "partial_result"}}
+<section id="result" class="space-y-3">
+  {{if .Warning}}
+  <div class="border border-[var(--color-warn)] text-[var(--color-warn)] bg-[var(--color-panel)] rounded p-3 text-sm mono">
+    {{.Warning}}
+  </div>
+  {{end}}
+
+  {{if .Result}}
+  <div class="border border-[var(--color-border)] bg-[var(--color-panel)] rounded p-4 mono text-sm">
+    <div class="text-[var(--color-fg-dim)] text-xs uppercase tracking-wider mb-2">Result</div>
+    <dl class="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1">
+      <dt class="text-[var(--color-fg-muted)]">Network</dt>     <dd>{{.Result.Network}}/{{.Result.PrefixLen}}</dd>
+      {{if .Result.Broadcast.IsValid}}<dt class="text-[var(--color-fg-muted)]">Broadcast</dt><dd>{{.Result.Broadcast}}</dd>{{end}}
+      <dt class="text-[var(--color-fg-muted)]">HostMin</dt>     <dd>{{.Result.HostMin}}</dd>
+      <dt class="text-[var(--color-fg-muted)]">HostMax</dt>     <dd>{{.Result.HostMax}}</dd>
+      <dt class="text-[var(--color-fg-muted)]">Hosts</dt>       <dd>{{.Result.HostCount}}</dd>
+      <dt class="text-[var(--color-fg-muted)]">Netmask</dt>     <dd>{{.Result.Netmask}}</dd>
+      <dt class="text-[var(--color-fg-muted)]">Wildcard</dt>    <dd>{{.Result.Wildcard}}</dd>
+      {{if .Result.Class}}<dt class="text-[var(--color-fg-muted)]">Class</dt><dd>{{.Result.Class}}</dd>{{end}}
+      <dt class="text-[var(--color-fg-muted)]">arpa</dt>        <dd>{{.Result.ReverseDNS}}</dd>
+      <dt class="text-[var(--color-fg-muted)]">Binary</dt>      <dd>{{.Result.BinaryAddr}}</dd>
+      <dt class="text-[var(--color-fg-muted)]">Mask (bin)</dt>  <dd>{{.Result.BinaryMask}}</dd>
+    </dl>
+  </div>
+  {{end}}
+
+  {{if and (not .Result) (not .Warning)}}
+  <div class="text-[var(--color-fg-dim)] text-sm">
+    Enter an IPv4 address and a mask (CIDR or dotted) to see network details.
+  </div>
+  {{end}}
+</section>
+{{end}}

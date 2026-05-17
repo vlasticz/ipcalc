@@ -1,0 +1,41 @@
+{{define "title"}}ipcalc — calculator{{end}}
+
+{{define "content"}}
+<div class="space-y-6">
+  <form hx-post="/calc" hx-target="#result" hx-swap="outerHTML"
+        class="border border-[var(--color-border)] bg-[var(--color-panel)] rounded p-4 space-y-3">
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-end">
+      <label class="space-y-1">
+        <span class="block text-xs uppercase tracking-wider text-[var(--color-fg-muted)]">IP address</span>
+        <input id="calc-ip" type="text" name="ip" placeholder="e.g. 192.168.1.0" value="{{.IP}}" autocomplete="off"
+               class="w-full mono bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1.5 placeholder:text-[var(--color-fg-dim)] placeholder:italic focus:outline-none focus:border-[var(--accent)]"
+               hx-trigger="keyup changed delay:200ms" hx-post="/calc" hx-target="#result" hx-swap="outerHTML" hx-include="closest form">
+      </label>
+      <label class="space-y-1">
+        <span class="block text-xs uppercase tracking-wider text-[var(--color-fg-muted)]">Mask</span>
+        <input id="calc-mask" type="text" name="mask" placeholder="e.g. 24" value="{{.Mask}}" autocomplete="off"
+               class="w-44 mono bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1.5 placeholder:text-[var(--color-fg-dim)] placeholder:italic focus:outline-none focus:border-[var(--accent)]"
+               hx-trigger="keyup changed delay:200ms" hx-post="/calc" hx-target="#result" hx-swap="outerHTML" hx-include="closest form">
+      </label>
+      <button type="submit" tabindex="-1" class="mono px-4 py-1.5 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--color-panel-2)]">Calculate</button>
+    </div>
+  </form>
+
+  {{template "partial_result" .}}
+</div>
+
+<script>
+  (function () {
+    const ip = document.getElementById('calc-ip');
+    const mask = document.getElementById('calc-mask');
+    if (!ip || !mask) return;
+    function bounce(from, to) {
+      from.addEventListener('keydown', function (e) {
+        if (e.key === 'Tab') { e.preventDefault(); to.focus(); to.select(); }
+      });
+    }
+    bounce(ip, mask);
+    bounce(mask, ip);
+  })();
+</script>
+{{end}}

@@ -9,16 +9,18 @@
   <script src="/static/htmx.min.js" defer></script>
 </head>
 <body class="accent-{{.Accent}} min-h-screen text-[var(--color-fg)]">
-  <header class="border-b border-[var(--color-border)] px-6 py-4 flex items-center justify-between">
-    <a href="/" class="mono font-semibold text-lg">
+  <header class="border-b border-[var(--color-border)] px-6 py-3 grid grid-cols-3 items-center">
+    <a href="/" class="mono font-semibold text-lg justify-self-start">
       <span style="color: var(--accent)">ip</span>calc
     </a>
-    <nav class="flex gap-4 text-sm text-[var(--color-fg-muted)]">
-      <a href="/" class="hover:text-[var(--color-fg)]">calc</a>
-      <a href="/split" class="hover:text-[var(--color-fg)]">split</a>
-      <a href="/saved" class="hover:text-[var(--color-fg)]">saved</a>
-      {{template "partial_theme_switch" .}}
+    <nav class="nav-pills justify-self-center" aria-label="Primary">
+      <a href="/" class="nav-pill" data-active="{{if eq .ActivePage "calc"}}true{{else}}false{{end}}">calculator</a>
+      <a href="/split" class="nav-pill" data-active="{{if eq .ActivePage "split"}}true{{else}}false{{end}}">subnetting</a>
+      <a href="/saved" class="nav-pill" data-active="{{if eq .ActivePage "saved"}}true{{else}}false{{end}}">saved</a>
     </nav>
+    <div class="justify-self-end">
+      {{template "partial_theme_switch" .}}
+    </div>
   </header>
   <main class="px-6 py-8 max-w-5xl mx-auto">
     {{block "content" .}}{{end}}
@@ -41,26 +43,50 @@
       document.body.addEventListener('htmx:afterSwap', e => formatNumbers(e.target));
     })();
 
-    // Theme switcher — client-side. Intercepts the form submit, writes the
-    // accent cookie, and swaps the body class so CSS variables (chips,
-    // hero address, bin-net, etc.) re-tint instantly. No HTTP roundtrip,
-    // no page reload — the displayed result panel is preserved. If JS is
-    // disabled the form submits to /theme and the server takes care of it.
+    // Theme picker — dropdown with colour swatches. Writes the accent
+    // cookie (with both max-age and explicit expires so every browser
+    // persists it), swaps body.className so CSS variables re-tint
+    // every accent-coloured element instantly. No HTTP roundtrip.
     (function () {
-      const form = document.querySelector('[data-theme-switch]');
-      if (!form) return;
-      form.addEventListener('click', e => {
-        const btn = e.target.closest('button[data-accent]');
-        if (!btn) return;
-        e.preventDefault();
-        const accent = btn.dataset.accent;
-        document.cookie = 'ipcalc_accent=' + accent +
-          '; path=/; max-age=31536000; SameSite=Lax';
+      const picker = document.querySelector('[data-theme-picker]');
+      if (!picker) return;
+      const trigger = picker.querySelector('.theme-trigger');
+      const menu = picker.querySelector('.theme-menu');
+      const items = picker.querySelectorAll('.theme-menu button');
+
+      function setOpen(open) {
+        menu.hidden = !open;
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      function setAccent(accent) {
+        const expires = new Date(Date.now() + 365 * 86400 * 1000).toUTCString();
+        document.cookie =
+          'ipcalc_accent=' + accent +
+          '; path=/; max-age=31536000; expires=' + expires + '; SameSite=Lax';
         document.body.className = document.body.className
           .replace(/accent-\w+/g, 'accent-' + accent);
-        form.querySelectorAll('button[data-accent]').forEach(b => {
+        items.forEach(b => {
           b.dataset.selected = (b.dataset.accent === accent) ? 'true' : 'false';
         });
+      }
+
+      trigger.addEventListener('click', e => {
+        e.stopPropagation();
+        setOpen(menu.hidden);
+      });
+      items.forEach(item => {
+        item.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          setAccent(item.dataset.accent);
+          setOpen(false);
+        });
+      });
+      document.addEventListener('click', e => {
+        if (!picker.contains(e.target)) setOpen(false);
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') setOpen(false);
       });
     })();
   </script>

@@ -1,13 +1,19 @@
 {{define "partial_theme_switch"}}
-{{/* No HTMX: JS intercepts the form (see layout.gohtml's inline script) and
-     updates the cookie + body class without a roundtrip. If JS is off, the
-     form submits normally and the server's /theme handler does a 303
-     redirect back, giving a graceful fallback. */}}
-<form action="/theme" method="post" class="flex gap-1 items-center" data-theme-switch>
-  {{range $a := .Accents}}
-  <button type="submit" name="accent" value="{{$a}}" data-accent="{{$a}}"
-          data-selected="{{if eq $.Accent $a}}true{{else}}false{{end}}"
-          title="Switch accent to {{$a}}">{{$a}}</button>
-  {{end}}
-</form>
+<div class="theme-picker" data-theme-picker>
+  <button type="button" class="theme-trigger"
+          aria-haspopup="true" aria-expanded="false"
+          title="Change accent colour">
+    <span class="theme-dot theme-dot-current"></span>
+    <span class="theme-chevron">▾</span>
+  </button>
+  <div class="theme-menu" role="menu" hidden>
+    {{range $a := .Accents}}
+    <button type="button" role="menuitem" data-accent="{{$a}}"
+            data-selected="{{if eq $.Accent $a}}true{{else}}false{{end}}">
+      <span class="theme-dot theme-dot-{{$a}}"></span>
+      <span>{{$a}}</span>
+    </button>
+    {{end}}
+  </div>
+</div>
 {{end}}

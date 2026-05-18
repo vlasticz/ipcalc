@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -24,7 +25,26 @@ func (s *server) wrapMiddleware(h http.Handler) http.Handler {
 
 func (s *server) withAccent(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), accentCtxKey, readAccentCookie(r))
+		accent := readAccentCookie(r)
+		ctx := context.WithValue(r.Context(), accentCtxKey, accent)
+
+		// Re-issue the cookie on page requests so any older HttpOnly
+		// version (set by a previous build of /theme) gets overwritten
+		// with a JS-writable one. Skipped on static and health probes
+		// to avoid pointless Set-Cookie chatter.
+		if _, err := r.Cookie(accentCookieName); err == nil &&
+			!strings.HasPrefix(r.URL.Path, "/static/") &&
+			r.URL.Path != "/healthz" {
+			http.SetCookie(w, &http.Cookie{
+				Name:     accentCookieName,
+				Value:    accent,
+				Path:     "/",
+				MaxAge:   60 * 60 * 24 * 365,
+				SameSite: http.SameSiteLaxMode,
+				Expires:  time.Now().Add(365 * 24 * time.Hour),
+			})
+		}
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

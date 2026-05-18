@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/vlasticz/ipcalc/internal/ipcalc"
 	"github.com/vlasticz/ipcalc/internal/storage"
@@ -23,10 +24,11 @@ type savedListItem struct {
 }
 
 // pageData is the canonical render context for full pages. Layout reads
-// .Accent and .Accents; pages read their own fields.
+// .Accent, .Accents, and .ActivePage; pages read their own fields.
 type pageData struct {
-	Accent  string
-	Accents []string
+	Accent     string
+	Accents    []string
+	ActivePage string // "calc" | "split" | "saved" — drives nav highlight
 
 	// Calculator
 	IP, Mask, Warning string
@@ -51,9 +53,23 @@ type pageData struct {
 
 func (s *server) basePageData(r *http.Request) pageData {
 	return pageData{
-		Accent:  accentFromContext(r.Context()),
-		Accents: allAccents,
+		Accent:     accentFromContext(r.Context()),
+		Accents:    allAccents,
+		ActivePage: activePageFromPath(r.URL.Path),
 	}
+}
+
+// activePageFromPath maps a request path to the top-level nav section.
+func activePageFromPath(p string) string {
+	switch {
+	case p == "/" || p == "":
+		return "calc"
+	case strings.HasPrefix(p, "/split"):
+		return "split"
+	case strings.HasPrefix(p, "/saved"):
+		return "saved"
+	}
+	return ""
 }
 
 func (s *server) renderPage(w http.ResponseWriter, _ *http.Request, page string, data pageData) {

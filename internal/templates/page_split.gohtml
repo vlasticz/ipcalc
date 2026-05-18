@@ -1,7 +1,148 @@
 {{define "title"}}ipcalc — split{{end}}
 
 {{define "content"}}
-<div class="text-[var(--color-fg-muted)] mono">
-  Split modes (equal-N and VLSM) — coming next.
+<div class="space-y-6">
+  <div class="tab-nav" data-tabs>
+    <button type="button" data-tab="equal" data-selected="true">Equal</button>
+    <button type="button" data-tab="vlsm" data-selected="false">VLSM</button>
+  </div>
+
+  {{/* ---- Equal mode ---- */}}
+  <div data-tab-panel="equal" class="space-y-4">
+    <form hx-post="/split/equal" hx-target="#result-equal" hx-swap="outerHTML"
+          class="border border-[var(--color-border)] bg-[var(--color-panel)] rounded p-4 space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-end">
+        <label class="space-y-1">
+          <span class="block text-xs uppercase tracking-wider text-[var(--color-fg-muted)]">Parent network</span>
+          <input id="eq-parent" type="text" name="parent" placeholder="e.g. 192.168.0.0/24" value="{{.SplitParent}}" autocomplete="off"
+                 class="w-full mono bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1.5 placeholder:text-[var(--color-fg-dim)] placeholder:italic focus:outline-none focus:border-[var(--accent)]">
+        </label>
+        <label class="space-y-1">
+          <span class="block text-xs uppercase tracking-wider text-[var(--color-fg-muted)]">Subnets</span>
+          <input id="eq-n" type="number" name="n" min="1" max="4096" placeholder="e.g. 4" value="{{.SplitN}}" autocomplete="off"
+                 class="w-32 mono bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1.5 placeholder:text-[var(--color-fg-dim)] placeholder:italic focus:outline-none focus:border-[var(--accent)]">
+        </label>
+        <button type="submit" class="mono px-4 py-1.5 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--color-panel-2)]">Split</button>
+      </div>
+    </form>
+
+    <section id="result-equal" class="space-y-3">
+      <div class="text-[var(--color-fg-dim)] text-sm">
+        Enter a parent network and the number of equal-sized subnets to split it into.
+      </div>
+    </section>
+  </div>
+
+  {{/* ---- VLSM mode ---- */}}
+  <div data-tab-panel="vlsm" class="space-y-4" hidden>
+    <form hx-post="/split/vlsm" hx-target="#result-vlsm" hx-swap="outerHTML"
+          class="border border-[var(--color-border)] bg-[var(--color-panel)] rounded p-4 space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3 items-end">
+        <label class="space-y-1">
+          <span class="block text-xs uppercase tracking-wider text-[var(--color-fg-muted)]">Parent network</span>
+          <input id="vlsm-parent" type="text" name="parent" placeholder="e.g. 192.168.0.0/24" value="{{.SplitParent}}" autocomplete="off"
+                 class="w-full mono bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1.5 placeholder:text-[var(--color-fg-dim)] placeholder:italic focus:outline-none focus:border-[var(--accent)]">
+        </label>
+        <label class="space-y-1">
+          <span class="block text-xs uppercase tracking-wider text-[var(--color-fg-muted)]">Host counts (comma-separated)</span>
+          <input id="vlsm-hosts" type="text" name="hosts" placeholder="e.g. 50, 20, 10, 2" value="{{.SplitHosts}}" autocomplete="off"
+                 class="w-full mono bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1.5 placeholder:text-[var(--color-fg-dim)] placeholder:italic focus:outline-none focus:border-[var(--accent)]">
+        </label>
+        <button type="submit" class="mono px-4 py-1.5 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--color-panel-2)]">Split</button>
+      </div>
+    </form>
+
+    <section id="result-vlsm" class="space-y-3">
+      <div class="text-[var(--color-fg-dim)] text-sm">
+        Enter a parent network and a comma-separated list of required host counts.
+        The largest is allocated first to avoid fragmentation; results return
+        in the order you typed them.
+      </div>
+    </section>
+  </div>
 </div>
+
+<script>
+  // /split page client logic:
+  //   - Tab toggle (client-side panel hide/show + data-selected for styling)
+  //   - localStorage persistence: each tab keeps its own state independently.
+  //     URL prefill (e.g. arriving from /calc with ?ip=...&mask=...) takes
+  //     priority for the parent field; secondary fields (n, hosts) restore
+  //     from store so cross-page nav doesn't wipe them out.
+  //   - After restore, the form whose required fields are all filled fires
+  //     a submit so the result panel populates without a click.
+  (function () {
+    const tabs = document.querySelectorAll('[data-tabs] button');
+    const panels = document.querySelectorAll('[data-tab-panel]');
+    const eqParent = document.getElementById('eq-parent');
+    const eqN = document.getElementById('eq-n');
+    const vlsmParent = document.getElementById('vlsm-parent');
+    const vlsmHosts = document.getElementById('vlsm-hosts');
+    const eqForm = eqParent?.closest('form');
+    const vlsmForm = vlsmParent?.closest('form');
+
+    function setTab(target) {
+      tabs.forEach(t => t.dataset.selected = (t.dataset.tab === target) ? 'true' : 'false');
+      panels.forEach(p => p.hidden = (p.dataset.tabPanel !== target));
+    }
+    function activeTab() {
+      const btn = document.querySelector('[data-tabs] button[data-selected="true"]');
+      return btn?.dataset?.tab || 'equal';
+    }
+
+    const STORE_KEY = 'ipcalc:split';
+    function save() {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          tab: activeTab(),
+          equal: { parent: eqParent.value.trim(), n: eqN.value.trim() },
+          vlsm:  { parent: vlsmParent.value.trim(), hosts: vlsmHosts.value.trim() },
+        }));
+      } catch {}
+    }
+
+    tabs.forEach(btn => btn.addEventListener('click', () => {
+      setTab(btn.dataset.tab);
+      save();
+      submitActive();
+    }));
+    [eqParent, eqN, vlsmParent, vlsmHosts].forEach(el => {
+      el?.addEventListener('input', save);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      let stored = {};
+      try { stored = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch {}
+
+      // Server may have prefilled parent fields via URL (?parent=... or
+      // ?ip=...&mask=...). Don't overwrite that — only fill what's empty.
+      if (!eqParent.value.trim() && stored.equal?.parent) eqParent.value = stored.equal.parent;
+      if (!eqN.value.trim()      && stored.equal?.n)      eqN.value      = stored.equal.n;
+      if (!vlsmParent.value.trim() && stored.vlsm?.parent) vlsmParent.value = stored.vlsm.parent;
+      if (!vlsmHosts.value.trim() && stored.vlsm?.hosts)  vlsmHosts.value  = stored.vlsm.hosts;
+      if (stored.tab) setTab(stored.tab);
+
+      save(); // re-snapshot the merged state
+
+      // Defer the init-time submit to a setTimeout(0) macrotask so it runs
+      // AFTER htmx's own DOMContentLoaded handler has attached its
+      // 'submit' listener to the forms. Without this delay, our
+      // htmx.trigger fires before htmx is wired up, the form falls back
+      // to its default GET behaviour, and the page reloads in a cycle.
+      // (Tab clicks happen long after init, so they don't need the
+      // setTimeout — htmx is ready by then.)
+      setTimeout(submitActive, 0);
+    });
+
+    function submitActive() {
+      if (!window.htmx || !window.htmx.trigger) return;
+      const target = activeTab();
+      if (target === 'equal' && eqParent.value.trim() && eqN.value.trim()) {
+        window.htmx.trigger(eqForm, 'submit');
+      } else if (target === 'vlsm' && vlsmParent.value.trim() && vlsmHosts.value.trim()) {
+        window.htmx.trigger(vlsmForm, 'submit');
+      }
+    }
+  })();
+</script>
 {{end}}

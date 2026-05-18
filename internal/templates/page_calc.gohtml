@@ -25,10 +25,22 @@
 </div>
 
 <script>
+  // /calc page client logic:
+  //   - Tab cycling between IP and mask
+  //   - localStorage persistence: each page remembers its own inputs across
+  //     navigation. On load, URL params win; otherwise restore from store.
+  //   - replaceState keeps the URL bar in sync (shareable, refresh-safe)
+  //
+  // Carrying a network from /calc to /split is an explicit user action
+  // (the "Split this" link inside the result panel) — the nav bar's
+  // /split link stays plain so switching pages preserves each page's
+  // independent state.
   (function () {
     const ip = document.getElementById('calc-ip');
     const mask = document.getElementById('calc-mask');
     if (!ip || !mask) return;
+    const form = ip.closest('form');
+
     function bounce(from, to) {
       from.addEventListener('keydown', function (e) {
         if (e.key === 'Tab') { e.preventDefault(); to.focus(); to.select(); }
@@ -36,6 +48,57 @@
     }
     bounce(ip, mask);
     bounce(mask, ip);
+
+    const STORE_KEY = 'ipcalc:calc';
+    function save() {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          ip: ip.value.trim(),
+          mask: mask.value.trim(),
+        }));
+      } catch {}
+    }
+    function syncURL() {
+      const v = ip.value.trim(), m = mask.value.trim();
+      const url = new URL(window.location);
+      if (v && m) {
+        url.searchParams.set('ip', v);
+        url.searchParams.set('mask', m);
+      } else {
+        url.searchParams.delete('ip');
+        url.searchParams.delete('mask');
+      }
+      history.replaceState(null, '', url);
+    }
+    function onChange() { save(); syncURL(); }
+    ip.addEventListener('input', onChange);
+    mask.addEventListener('input', onChange);
+
+    // Initialise once the DOM is parsed and htmx (deferred) is available.
+    document.addEventListener('DOMContentLoaded', () => {
+      // URL prefill already in form values (server-rendered). Sync to store.
+      if (ip.value.trim() && mask.value.trim()) {
+        save();
+        return;
+      }
+      // Restore from localStorage and trigger a recompute.
+      let stored = {};
+      try { stored = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch {}
+      if (stored.ip && stored.mask) {
+        ip.value = stored.ip;
+        mask.value = stored.mask;
+        syncURL();
+        // Defer to a setTimeout(0) macrotask so htmx's own DCL handler
+        // has finished attaching its 'submit' listener before we fire.
+        // Without this, the form falls back to its default GET behaviour
+        // and the URL grows query params on every reload.
+        setTimeout(() => {
+          if (window.htmx && window.htmx.trigger) {
+            window.htmx.trigger(form, 'submit');
+          }
+        }, 0);
+      }
+    });
   })();
 </script>
 {{end}}

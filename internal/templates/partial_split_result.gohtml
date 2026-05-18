@@ -1,0 +1,54 @@
+{{define "partial_split_result"}}
+{{$mode := .SplitMode}}
+<section id="result-{{$mode}}" class="space-y-3">
+  {{if .SplitError}}
+  <div class="border border-[var(--color-err)] text-[var(--color-err)] bg-[var(--color-panel)] rounded p-3 text-sm mono">
+    {{.SplitError}}
+  </div>
+  {{end}}
+
+  {{if .SplitResults}}
+  <div class="section section-primary">
+    <div class="section-title">Subnets</div>
+    <div class="overflow-x-auto">
+      <table class="split-table">
+        <thead>
+          <tr>
+            {{if eq $mode "vlsm"}}<th>Req</th>{{else}}<th>#</th>{{end}}
+            <th>Subnet</th>
+            <th>Hosts</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $i, $r := .SplitResults}}
+          <tr>
+            {{if eq $mode "vlsm"}}
+            <td><span data-num="{{index $.SplitRequested $i}}">{{index $.SplitRequested $i}}</span></td>
+            {{else}}
+            <td>{{add $i 1}}</td>
+            {{end}}
+            <td><a class="subnet-link" href="/?ip={{$r.Network}}&amp;mask={{$r.PrefixLen}}" title="Open this subnet on the calculator"><span class="bin-net">{{$r.Network}}</span>/{{$r.PrefixLen}}</a></td>
+            <td>{{$r.HostMin}} <span class="range-arrow">→</span> {{$r.HostMax}}</td>
+            <td><span data-num="{{$r.HostCount}}">{{$r.HostCount}}</span></td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {{end}}
+
+  {{if and (not .SplitError) (not .SplitResults)}}
+  <div class="text-[var(--color-fg-dim)] text-sm">
+    {{if eq $mode "vlsm"}}
+    Enter a parent network and a comma-separated list of required host counts.
+    The largest is allocated first to avoid fragmentation; results return in
+    the order you typed them.
+    {{else}}
+    Enter a parent network and the number of equal-sized subnets to split it into.
+    {{end}}
+  </div>
+  {{end}}
+</section>
+{{end}}

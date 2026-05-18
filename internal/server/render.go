@@ -19,6 +19,15 @@ type pageData struct {
 	// Saved view
 	Slug  string
 	Label string
+
+	// Split
+	SplitMode      string // "equal" or "vlsm" — drives which partial wrapper id is used
+	SplitParent    string // form value, echoed back on error
+	SplitN         string // form value (Equal mode)
+	SplitHosts     string // form value (VLSM mode), comma-separated
+	SplitResults   []ipcalc.Result
+	SplitRequested []int  // for VLSM, aligned with SplitResults so labels line up
+	SplitError     string
 }
 
 func (s *server) basePageData(r *http.Request) pageData {

@@ -136,6 +136,96 @@ body { font-family: var(--font-sans); }
 .bin-net  { color: var(--accent); }
 .bin-host { color: var(--color-fg-dim); }
 
+/* Tab navigation — used by /split. Underline on the active tab in the
+   accent colour; muted/hover for inactive. */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.tab-nav button {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 80ms, border-color 80ms;
+}
+.tab-nav button:hover { color: var(--color-fg); }
+.tab-nav button[data-selected="true"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Split result table — compact, monospace, subtle row separators. */
+.split-table {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+.split-table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-fg-muted);
+  font-weight: normal;
+  padding: 0.5rem 1rem 0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.split-table td {
+  padding: 0.375rem 1rem 0.375rem 0;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-border) 50%, transparent);
+  white-space: nowrap;
+}
+.split-table tr:last-child td { border-bottom: none; }
+.split-table td:first-child {
+  color: var(--color-fg-dim);
+  text-align: right;
+  padding-right: 1.25rem;
+}
+
+/* Subnet click — link from a split result back to /calc with prefill. */
+.subnet-link {
+  text-decoration: none;
+  color: inherit;
+  border-radius: 0.25rem;
+  padding: 0.0625rem 0.25rem;
+  margin: -0.0625rem -0.25rem;
+  transition: background 80ms;
+}
+.subnet-link:hover {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+
+/* Action link — small explicit action sitting in a section header (e.g.
+   the "Split this →" affordance on the calculator result). Restrained
+   border, accent-tinted on hover. */
+.action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  transition: color 80ms, border-color 80ms, background 80ms;
+}
+.action-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+
 /* Theme switch — replaces HTMX form with plain buttons styled via
    data-selected attribute. */
 [data-theme-switch] button {

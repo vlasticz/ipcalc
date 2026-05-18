@@ -87,5 +87,7 @@ func (t *Templates) RenderPartial(w io.Writer, name string, data any) error {
 	return t.partials.ExecuteTemplate(w, name, data)
 }
 
-// funcs is the template FuncMap. Empty for now; populate as the UI grows.
-var funcs = template.FuncMap{}
+// funcs is the template FuncMap.
+var funcs = template.FuncMap{
+	"add": func(a, b int) int { return a + b },
+}

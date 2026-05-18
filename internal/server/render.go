@@ -4,7 +4,23 @@ import (
 	"net/http"
 
 	"github.com/vlasticz/ipcalc/internal/ipcalc"
+	"github.com/vlasticz/ipcalc/internal/storage"
 )
+
+// savedResult is the small ack rendered into the save form's slot after
+// POST /saved succeeds — slug for linking, label echoed back.
+type savedResult struct {
+	Slug  string
+	Label string
+}
+
+// savedListItem wraps a Saved row with the normalised network for display.
+// Stored input_json preserves what the user typed; the listing column
+// shows the canonical "network/prefix" form computed at render time.
+type savedListItem struct {
+	*storage.Saved
+	Network string
+}
 
 // pageData is the canonical render context for full pages. Layout reads
 // .Accent and .Accents; pages read their own fields.
@@ -16,9 +32,12 @@ type pageData struct {
 	IP, Mask, Warning string
 	Result            *ipcalc.Result
 
-	// Saved view
-	Slug  string
-	Label string
+	// Saved view / list
+	Slug       string
+	Label      string
+	SavedList  []savedListItem
+	SavedItem  *storage.Saved
+	SaveResult *savedResult // populated after a successful save
 
 	// Split
 	SplitMode      string // "equal" or "vlsm" — drives which partial wrapper id is used

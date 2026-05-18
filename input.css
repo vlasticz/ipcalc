@@ -189,6 +189,29 @@ body { font-family: var(--font-sans); }
   text-align: right;
   padding-right: 1.25rem;
 }
+/* Saved list — table-layout: fixed with deliberate column widths so the
+   spacing reads as balanced. Label expands; the rest are sized to fit
+   their content (worst-case CIDR, timestamp, button) with a bit of
+   breathing room. Delete column is right-aligned so the button sits at
+   the edge regardless of label width. */
+.saved-list {
+  table-layout: fixed;
+}
+.saved-list td:first-child {
+  text-align: left;
+  color: inherit;
+  padding-right: 1rem;
+}
+.saved-list th:nth-child(2),
+.saved-list td:nth-child(2) { width: 11rem; }
+.saved-list th:nth-child(3),
+.saved-list td:nth-child(3) { width: 11rem; }
+.saved-list th:nth-child(4),
+.saved-list td:nth-child(4) {
+  width: 8rem;
+  text-align: right;
+  padding-right: 0;
+}
 
 /* Subnet click — link from a split result back to /calc with prefill. */
 .subnet-link {
@@ -204,12 +227,15 @@ body { font-family: var(--font-sans); }
 }
 
 /* Action link — small explicit action sitting in a section header (e.g.
-   the "Split this →" affordance on the calculator result). Restrained
-   border, accent-tinted on hover. */
+   "Split this →" on the calculator result, "Save →" in the save form).
+   Fixed min-width + centered content so all action buttons render the
+   same size regardless of label length. */
 .action-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
+  min-width: 7rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--color-fg-muted);

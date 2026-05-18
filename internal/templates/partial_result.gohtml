@@ -37,6 +37,13 @@
       <dd>{{.Result.Broadcast}}</dd>
       {{end}}
     </dl>
+
+    {{/* Save form — hidden on /saved/{slug} views (SavedItem is set there). */}}
+    {{if not .SavedItem}}
+    <div class="pt-3 border-t border-[var(--color-border)]">
+      {{template "partial_save" .}}
+    </div>
+    {{end}}
   </div>
 
   {{/* SECONDARY — Mask: netmask, wildcard. */}}

@@ -1,7 +1,51 @@
 {{define "title"}}ipcalc — saved{{end}}
 
 {{define "content"}}
-<div class="text-[var(--color-fg-muted)] mono">
-  Saved calculations list — coming next.
+<div class="space-y-4">
+  <div class="flex items-baseline justify-between">
+    <h1 class="text-lg mono">Saved calculations</h1>
+    <span class="text-[var(--color-fg-dim)] text-xs mono">{{len .SavedList}} entries</span>
+  </div>
+
+  {{if .SavedList}}
+  <div class="section">
+    <div class="overflow-x-auto">
+      <table class="split-table saved-list">
+        <thead>
+          <tr>
+            <th>Label</th>
+            <th>Network</th>
+            <th>Saved</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $row := .SavedList}}
+          <tr id="saved-row-{{$row.Slug}}">
+            <td>
+              <a href="/saved/{{$row.Slug}}" class="subnet-link">
+                {{if $row.Label}}{{$row.Label}}{{else}}<span class="text-[var(--color-fg-dim)]">{{$row.Slug}}</span>{{end}}
+              </a>
+            </td>
+            <td><span class="bin-net">{{$row.Network}}</span></td>
+            <td><span class="text-[var(--color-fg-muted)]">{{$row.CreatedAt.Format "2006-01-02 15:04"}}</span></td>
+            <td>
+              <button class="action-link"
+                      hx-delete="/saved/{{$row.Slug}}"
+                      hx-target="#saved-row-{{$row.Slug}}"
+                      hx-swap="outerHTML"
+                      hx-confirm="Delete this saved calc?">Delete</button>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {{else}}
+  <div class="text-[var(--color-fg-dim)] text-sm">
+    No saved calculations yet. Use the Save form on the calculator result to add one.
+  </div>
+  {{end}}
 </div>
 {{end}}

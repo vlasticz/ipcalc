@@ -1,0 +1,27 @@
+{{define "partial_save"}}
+<div id="save-area" class="flex items-center gap-2 text-sm mono">
+  {{if .SaveResult}}
+  <span class="text-[var(--color-fg-muted)] text-xs uppercase tracking-wider">Saved</span>
+  <a class="action-link" href="/saved/{{.SaveResult.Slug}}">
+    /saved/{{.SaveResult.Slug}}{{if .SaveResult.Label}} · {{.SaveResult.Label}}{{end}}
+  </a>
+  {{else if .Result}}
+  <form hx-post="/saved" hx-target="#save-area" hx-swap="outerHTML"
+        class="flex items-center gap-2 w-full">
+    <span class="text-[var(--color-fg-muted)] text-xs uppercase tracking-wider whitespace-nowrap">Save</span>
+    {{/* Save the normalised network, not the typed values — that way the
+         /saved/{slug} view shows the canonical result without a host-bits
+         warning that the user can't reconcile against an unseen input. */}}
+    <input type="hidden" name="ip" value="{{.Result.Network}}">
+    <input type="hidden" name="mask" value="{{.Result.PrefixLen}}">
+    <input type="text" name="label" placeholder="label (optional)" autocomplete="off"
+           class="w-64 ml-auto mono bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1 text-xs placeholder:text-[var(--color-fg-dim)] placeholder:italic focus:outline-none focus:border-[var(--accent)]">
+    <button type="submit" class="action-link">Save →</button>
+  </form>
+  {{end}}
+</div>
+{{end}}
+
+{{define "partial_save_success"}}
+{{template "partial_save" .}}
+{{end}}

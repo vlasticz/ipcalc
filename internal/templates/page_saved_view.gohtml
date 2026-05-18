@@ -1,7 +1,17 @@
-{{define "title"}}ipcalc — saved/{{.Slug}}{{end}}
+{{define "title"}}ipcalc — {{if .Label}}{{.Label}}{{else}}{{.Slug}}{{end}}{{end}}
 
 {{define "content"}}
-<div class="text-[var(--color-fg-muted)] mono">
-  Saved calculation view — coming next.
+<div class="space-y-4">
+  <div class="flex items-baseline justify-between gap-3 flex-wrap">
+    <div class="flex items-baseline gap-3">
+      <h1 class="text-lg mono">
+        {{if .Label}}{{.Label}}{{else}}<span class="text-[var(--color-fg-dim)]">/saved/{{.Slug}}</span>{{end}}
+      </h1>
+      {{if .Label}}<span class="text-[var(--color-fg-dim)] text-xs mono">{{.Slug}}</span>{{end}}
+    </div>
+    <a href="/saved" class="action-link">← back to saved</a>
+  </div>
+
+  {{template "partial_result" .}}
 </div>
 {{end}}

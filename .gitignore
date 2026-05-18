@@ -15,9 +15,10 @@ CLAUDE.md
 # Node (Tailwind CLI only — runtime is Go)
 /node_modules/
 
-# Env / secrets
+# Env / secrets / per-deployment compose
 .env
 .env.local
+compose.yaml
 
 # Editor / OS noise
 .DS_Store

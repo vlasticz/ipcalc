@@ -9,7 +9,11 @@
 
 ARG GO_VERSION=1.24
 ARG TAILWIND_VERSION=4.0.0
-ARG DISTROLESS_TAG=nonroot
+# Distroless static without the `:nonroot` suffix runs as root — required
+# for bind-mounted /data to be writable out-of-the-box regardless of
+# host UID. The image still has no shell, package manager, or libc; the
+# attack surface is essentially "the single static Go binary".
+ARG DISTROLESS_TAG=latest
 
 # ----------------------------------------------------------------------------
 # Stage 1: build CSS + Go binary
@@ -63,7 +67,6 @@ COPY --from=build /src/static /static
 
 EXPOSE 8080
 VOLUME ["/data"]
-USER nonroot:nonroot
 
 # Single-binary healthcheck — distroless/static has no shell or curl, so the
 # server itself implements the probe behind a flag.

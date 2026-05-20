@@ -1,4 +1,4 @@
-.PHONY: dev build test css css-watch vendor docker docker-amd64 docker-multiarch clean help
+.PHONY: dev build test css css-watch vendor docker docker-amd64 docker-multiarch scan publish clean help
 
 # ---- Configuration ----
 BINARY      := server
@@ -6,6 +6,7 @@ PKG         := ./cmd/server
 OUT         := bin/$(BINARY)
 IMAGE       := ipcalc
 TAG         := dev
+HUB_IMAGE   := vlasticz/ipcalc
 PLATFORM_ARM:= linux/arm64
 PLATFORM_AMD:= linux/amd64
 HTMX_VERSION:= 2.0.4
@@ -47,6 +48,30 @@ docker-amd64: ## Build the AMD64 image.
 
 docker-multiarch: ## Build both architectures (no --load; requires a registry to push).
 	docker buildx build --platform $(PLATFORM_ARM),$(PLATFORM_AMD) -t $(IMAGE):$(TAG) .
+
+# ---- Release pipeline ----
+scan: ## Build a local amd64 image (--load) and run Docker Scout's CVE quickview. Pre-release sanity check.
+	@command -v docker >/dev/null 2>&1 || { echo "docker not installed"; exit 1; }
+	docker buildx build --platform $(PLATFORM_AMD) --pull --load -t $(IMAGE):scan .
+	@echo ""
+	@echo "=== Docker Scout — quickview ==="
+	docker scout quickview $(IMAGE):scan
+	@echo ""
+	@echo "Drill down with:  docker scout cves $(IMAGE):scan"
+
+publish: ## Build multi-arch and push to Docker Hub. Required: VERSION=x.y.z. Also tags :latest.
+	@if [ -z "$(VERSION)" ]; then \
+	  echo "VERSION required, e.g.: make publish VERSION=0.9.1"; exit 1; \
+	fi
+	docker buildx build \
+	  --platform $(PLATFORM_ARM),$(PLATFORM_AMD) \
+	  --pull \
+	  -t $(HUB_IMAGE):$(VERSION) \
+	  -t $(HUB_IMAGE):latest \
+	  --push .
+	@echo ""
+	@echo "Pushed $(HUB_IMAGE):$(VERSION) and $(HUB_IMAGE):latest"
+	@echo "Next:  git tag -a v$(VERSION) -m \"v$(VERSION)\" && git push origin v$(VERSION)"
 
 # ---- Housekeeping ----
 clean:

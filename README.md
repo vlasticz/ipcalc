@@ -1,5 +1,9 @@
 # ipcalc
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/vlasticz/ipcalc?logo=docker&label=docker%20pulls)](https://hub.docker.com/r/vlasticz/ipcalc)
+[![Docker Image Size](https://img.shields.io/docker/image-size/vlasticz/ipcalc/latest?logo=docker&label=image%20size)](https://hub.docker.com/r/vlasticz/ipcalc)
+[![License](https://img.shields.io/github/license/vlasticz/ipcalc)](LICENSE)
+
 A modern, lightweight web-based IPv4 subnet calculator. Go + HTMX + Tailwind, single
 static binary, multi-arch Docker image (arm64 / amd64).
 
@@ -14,32 +18,46 @@ static binary, multi-arch Docker image (arm64 / amd64).
 
 ## Run
 
-**Dev** — hot reload via Air + Tailwind watch:
+### Dev — hot reload
 
 ```sh
-make dev
+make dev    # requires Air + Tailwind CLI; watches Go + CSS in parallel
 ```
 
-**Local binary**:
+### Local binary
 
 ```sh
 make build
-./bin/server -port 8080 -db data/ipcalc.db
+./bin/server    # defaults: -port 8080, -db data/ipcalc.db
 ```
 
-**Docker (arm64 by default; `make docker-amd64` or `docker-multiarch` for
-others)**:
+### Docker — pull from Hub
 
 ```sh
-make docker
+docker run --rm -p 8080:8080 -v "$PWD/data:/data" vlasticz/ipcalc:latest
+```
+
+Or with Compose:
+
+```sh
+cp compose.example.yaml compose.yaml    # edit if needed
+docker compose up -d                    # pulls vlasticz/ipcalc:latest from Hub
+```
+
+### Docker — build from source
+
+```sh
+make docker                             # arm64 by default; -amd64 / -multiarch variants in the Makefile
 docker run --rm -p 8080:8080 -v "$PWD/data:/data" ipcalc:dev
 ```
 
-The SQLite database lives at `/data/ipcalc.db` inside the container.
-Bind-mount any host directory there and you're set — no UID juggling.
+Or via Compose with a forced rebuild:
 
-**Compose** — copy `compose.example.yaml` to `compose.yaml`, adjust ports
-and volumes for your environment, then `docker compose up -d`.
+```sh
+docker compose up --build -d            # uses the compose file's `build: .` directive
+```
+
+Without `--build`, Compose pulls from Hub even though `build: .` is set in the file.
 
 ## Credits
 

@@ -4,18 +4,32 @@
 
 services:
   ipcalc:
-    image: ipcalc:latest          # or a pinned version, e.g. ipcalc:0.9.0
+    # Pulled from Docker Hub by default. If you also want to support
+    # building from source (e.g. `docker compose build`), the `build: .`
+    # directive points Compose at the local Dockerfile.
+    image: vlasticz/ipcalc:latest   # or a pinned version, e.g. vlasticz/ipcalc:0.9.0
+    build: .
+
     container_name: ipcalc
     restart: unless-stopped
+
+    # These env vars are OPTIONAL — the image already sets the same
+    # defaults. They are listed here only to make them discoverable;
+    # override them if you want to change the listen port or DB path.
     environment:
-      PORT: "8080"
-      DB_PATH: "/data/ipcalc.db"
+      PORT: "8080"                  # default: 8080
+      DB_PATH: "/data/ipcalc.db"    # default: /data/ipcalc.db (lives in the /data volume)
+
     ports:
-      - "8080:8080"               # adjust host port to taste
+      - "8080:8080"                 # adjust host port to taste
+
     volumes:
-      - ./data:/data              # bind mount — SQLite db lives in ./data
-    # The Dockerfile already declares a HEALTHCHECK; this block makes it
-    # visible to operators reading the compose file.
+      - ./data:/data                # bind mount — SQLite db lives in ./data
+
+    # OPTIONAL — the Dockerfile already declares the same HEALTHCHECK,
+    # so the container is probed regardless. This block just makes the
+    # health-probe visible to anyone reading the compose file (and to
+    # tools like Portainer/Dockge that display compose-level config).
     healthcheck:
       test: ["CMD", "/server", "-healthcheck"]
       interval: 30s

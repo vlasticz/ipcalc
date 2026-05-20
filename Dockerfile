@@ -7,7 +7,7 @@
 # Build:        docker buildx build --platform linux/arm64 --load -t ipcalc:dev .
 # Both archs:   docker buildx build --platform linux/arm64,linux/amd64 -t ipcalc:dev .
 
-ARG GO_VERSION=1.24
+ARG GO_VERSION=1.26
 ARG TAILWIND_VERSION=4.0.0
 # Distroless static without the `:nonroot` suffix runs as root — required
 # for bind-mounted /data to be writable out-of-the-box regardless of
